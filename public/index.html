@@ -1,0 +1,1399 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Luxe — Fine Dining Order</title>
+    <link
+      rel="icon"
+      href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>◆</text></svg>"
+    />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap"
+      rel="stylesheet"
+    />
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+      tailwind.config = {
+        theme: {
+          extend: {
+            fontFamily: { jakarta: ['"Plus Jakarta Sans"', "sans-serif"] },
+          },
+        },
+      };
+    </script>
+    <style>
+      *,
+      *::before,
+      *::after {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
+      html {
+        scroll-behavior: smooth;
+      }
+      body {
+        font-family: "Plus Jakarta Sans", sans-serif;
+        background: #09090b;
+        color: #fff;
+        overflow-x: hidden;
+      }
+
+      /* Grain texture */
+      body::before {
+        content: "";
+        position: fixed;
+        inset: 0;
+        z-index: 0;
+        pointer-events: none;
+        background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E");
+        background-size: 200px;
+        opacity: 0.35;
+      }
+
+      /* Glass morphism */
+      .glass {
+        background: rgba(255, 255, 255, 0.035);
+        backdrop-filter: blur(16px);
+        -webkit-backdrop-filter: blur(16px);
+        border: 1px solid rgba(255, 255, 255, 0.07);
+      }
+      .glass-strong {
+        background: rgba(15, 15, 17, 0.85);
+        backdrop-filter: blur(32px);
+        -webkit-backdrop-filter: blur(32px);
+        border: 1px solid rgba(255, 255, 255, 0.08);
+      }
+
+      /* Navbar */
+      #navbar {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        z-index: 50;
+        background: rgba(9, 9, 11, 0.85);
+        backdrop-filter: blur(24px);
+        -webkit-backdrop-filter: blur(24px);
+        border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+        transition: box-shadow 0.3s;
+      }
+
+      /* Search input */
+      .search-input {
+        background: rgba(255, 255, 255, 0.05);
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        color: #fff;
+        transition: all 0.25s;
+      }
+      .search-input:focus {
+        outline: none;
+        border-color: rgba(16, 185, 129, 0.5);
+        box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.08);
+        background: rgba(255, 255, 255, 0.07);
+      }
+      .search-input::placeholder {
+        color: rgba(255, 255, 255, 0.25);
+      }
+
+      /* Category tabs */
+      .cat-tab {
+        color: rgba(255, 255, 255, 0.4);
+        border: 1px solid rgba(255, 255, 255, 0.06);
+        background: rgba(255, 255, 255, 0.03);
+        transition: all 0.2s;
+        white-space: nowrap;
+      }
+      .cat-tab:hover {
+        color: rgba(255, 255, 255, 0.7);
+        border-color: rgba(255, 255, 255, 0.12);
+      }
+      .cat-tab.active {
+        color: #10b981;
+        border-color: rgba(16, 185, 129, 0.4);
+        background: rgba(16, 185, 129, 0.08);
+      }
+
+      /* Menu card */
+      .menu-card {
+        background: rgba(255, 255, 255, 0.03);
+        border: 1px solid rgba(255, 255, 255, 0.07);
+        transition:
+          transform 0.3s cubic-bezier(0.22, 1, 0.36, 1),
+          box-shadow 0.3s,
+          border-color 0.3s;
+      }
+      .menu-card:hover {
+        transform: translateY(-4px);
+        box-shadow:
+          0 24px 48px rgba(0, 0, 0, 0.6),
+          0 0 0 1px rgba(16, 185, 129, 0.15);
+        border-color: rgba(16, 185, 129, 0.2);
+      }
+      .menu-card .card-emoji {
+        transition: transform 0.4s cubic-bezier(0.22, 1, 0.36, 1);
+      }
+      .menu-card:hover .card-emoji {
+        transform: scale(1.15) rotate(-3deg);
+      }
+
+      /* Add button */
+      .add-btn {
+        background: rgba(16, 185, 129, 0.1);
+        border: 1px solid rgba(16, 185, 129, 0.25);
+        color: #10b981;
+        transition: all 0.2s;
+      }
+      .add-btn:hover {
+        background: #10b981;
+        color: #fff;
+        box-shadow: 0 0 20px rgba(16, 185, 129, 0.4);
+      }
+      .add-btn:active {
+        transform: scale(0.94);
+      }
+
+      .qty-btn {
+        background: rgba(255, 255, 255, 0.06);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        color: #fff;
+        transition: all 0.15s;
+      }
+      .qty-btn:hover {
+        background: rgba(255, 255, 255, 0.12);
+      }
+      .qty-btn:active {
+        transform: scale(0.9);
+      }
+
+      /* Cart button */
+      .cart-btn {
+        background: rgba(255, 255, 255, 0.05);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        transition: all 0.2s;
+      }
+      .cart-btn:hover {
+        background: rgba(255, 255, 255, 0.1);
+      }
+
+      /* Cart drawer */
+      #cart-overlay {
+        position: fixed;
+        inset: 0;
+        z-index: 60;
+        background: rgba(0, 0, 0, 0.6);
+        backdrop-filter: blur(4px);
+        opacity: 0;
+        pointer-events: none;
+        transition: opacity 0.35s;
+      }
+      #cart-overlay.open {
+        opacity: 1;
+        pointer-events: all;
+      }
+
+      #cart-drawer {
+        position: fixed;
+        top: 0;
+        right: 0;
+        bottom: 0;
+        z-index: 70;
+        width: min(420px, 95vw);
+        background: #0f0f11;
+        border-left: 1px solid rgba(255, 255, 255, 0.07);
+        transform: translateX(100%);
+        transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
+      }
+      #cart-drawer.open {
+        transform: translateX(0);
+      }
+
+      /* Drawer scrollable area */
+      #cart-items-list {
+        overflow-y: auto;
+        flex: 1;
+      }
+      #cart-items-list::-webkit-scrollbar {
+        width: 4px;
+      }
+      #cart-items-list::-webkit-scrollbar-track {
+        background: transparent;
+      }
+      #cart-items-list::-webkit-scrollbar-thumb {
+        background: rgba(255, 255, 255, 0.1);
+        border-radius: 2px;
+      }
+
+      /* Payment toggle */
+      .pay-toggle-wrap {
+        background: rgba(255, 255, 255, 0.04);
+        border: 1px solid rgba(255, 255, 255, 0.07);
+        border-radius: 14px;
+        padding: 4px;
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+      }
+      .pay-toggle {
+        padding: 10px;
+        border-radius: 10px;
+        font-size: 13px;
+        font-weight: 600;
+        color: rgba(255, 255, 255, 0.4);
+        transition: all 0.25s;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 6px;
+      }
+      .pay-toggle.selected {
+        background: rgba(16, 185, 129, 0.12);
+        color: #10b981;
+        box-shadow: inset 0 0 0 1px rgba(16, 185, 129, 0.3);
+      }
+
+      /* Place order button */
+      #place-order-btn {
+        background: #10b981;
+        color: #fff;
+        font-weight: 700;
+        transition: all 0.25s;
+        cursor: pointer;
+      }
+      #place-order-btn:hover:not(:disabled) {
+        background: #059669;
+        box-shadow: 0 0 30px rgba(16, 185, 129, 0.4);
+      }
+      #place-order-btn:active:not(:disabled) {
+        transform: scale(0.98);
+      }
+      #place-order-btn:disabled {
+        background: rgba(255, 255, 255, 0.07);
+        color: rgba(255, 255, 255, 0.25);
+        cursor: not-allowed;
+      }
+
+      /* QRIS Modal */
+      #qris-modal {
+        position: fixed;
+        inset: 0;
+        z-index: 100;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 16px;
+        background: rgba(0, 0, 0, 0.75);
+        backdrop-filter: blur(12px);
+        -webkit-backdrop-filter: blur(12px);
+        opacity: 0;
+        pointer-events: none;
+        transition: opacity 0.3s;
+      }
+      #qris-modal.open {
+        opacity: 1;
+        pointer-events: all;
+      }
+
+      #qris-card {
+        background: #111113;
+        border: 1px solid rgba(255, 255, 255, 0.09);
+        border-radius: 28px;
+        padding: 36px;
+        max-width: 360px;
+        width: 100%;
+        transform: scale(0.88) translateY(20px);
+        transition: transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+        text-align: center;
+      }
+      #qris-modal.open #qris-card {
+        transform: scale(1) translateY(0);
+      }
+
+      #qr-canvas {
+        border-radius: 16px;
+        border: 1px solid rgba(255, 255, 255, 0.07);
+        display: block;
+        margin: 0 auto;
+      }
+
+      /* Success overlay */
+      #success-overlay {
+        position: fixed;
+        inset: 0;
+        z-index: 200;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: rgba(0, 0, 0, 0.92);
+        backdrop-filter: blur(20px);
+        opacity: 0;
+        pointer-events: none;
+        transition: opacity 0.4s;
+      }
+      #success-overlay.open {
+        opacity: 1;
+        pointer-events: all;
+      }
+
+      .checkmark-svg {
+        width: 80px;
+        height: 80px;
+      }
+      .checkmark-circle {
+        stroke: #10b981;
+        stroke-width: 1.5;
+        fill: none;
+        stroke-dasharray: 166;
+        stroke-dashoffset: 166;
+      }
+      .checkmark-check {
+        stroke: #10b981;
+        stroke-width: 2.5;
+        fill: none;
+        stroke-linecap: round;
+        stroke-linejoin: round;
+        stroke-dasharray: 50;
+        stroke-dashoffset: 50;
+      }
+      .success-open .checkmark-circle {
+        animation: drawCircle 0.7s cubic-bezier(0.65, 0, 0.45, 1) 0.1s forwards;
+      }
+      .success-open .checkmark-check {
+        animation: drawCheck 0.35s cubic-bezier(0.65, 0, 0.45, 1) 0.8s forwards;
+      }
+      @keyframes drawCircle {
+        to {
+          stroke-dashoffset: 0;
+        }
+      }
+      @keyframes drawCheck {
+        to {
+          stroke-dashoffset: 0;
+        }
+      }
+
+      .success-open {
+        animation: successBounce 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+      }
+      @keyframes successBounce {
+        from {
+          transform: scale(0.7);
+          opacity: 0;
+        }
+        to {
+          transform: scale(1);
+          opacity: 1;
+        }
+      }
+
+      /* Card stagger animations */
+      @keyframes cardIn {
+        from {
+          opacity: 0;
+          transform: translateY(20px) scale(0.97);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0) scale(1);
+        }
+      }
+      .card-anim {
+        animation: cardIn 0.5s cubic-bezier(0.22, 1, 0.36, 1) both;
+      }
+
+      /* Orb */
+      .orb {
+        position: fixed;
+        border-radius: 50%;
+        filter: blur(100px);
+        pointer-events: none;
+        z-index: 0;
+      }
+
+      /* scrollbar hide for categories */
+      .cats-scroll::-webkit-scrollbar {
+        display: none;
+      }
+      .cats-scroll {
+        -ms-overflow-style: none;
+        scrollbar-width: none;
+      }
+    </style>
+  </head>
+  <body>
+    <!-- Ambient orbs -->
+    <div
+      class="orb w-[500px] h-[500px] bg-emerald-600/[0.07] top-0 left-1/2 -translate-x-1/2"
+    ></div>
+    <div class="orb w-72 h-72 bg-emerald-800/[0.06] bottom-0 right-0"></div>
+
+    <!-- ─────────────── NAVBAR ─────────────── -->
+    <nav id="navbar" class="px-4 md:px-8">
+      <div class="max-w-5xl mx-auto flex items-center justify-between h-16">
+        <a href="/" class="flex items-center gap-2.5">
+          <div
+            class="w-8 h-8 rounded-xl bg-emerald-500/10 ring-1 ring-emerald-500/30 flex items-center justify-center"
+          >
+            <span class="text-emerald-400 text-sm">◆</span>
+          </div>
+          <span class="font-bold text-white text-sm tracking-tight">LUXE</span>
+        </a>
+
+        <button
+          id="cart-toggle-btn"
+          onclick="openCart()"
+          class="cart-btn flex items-center gap-2.5 px-4 py-2 rounded-xl text-sm text-white relative"
+        >
+          <svg
+            class="w-4 h-4"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+            stroke-width="2"
+          >
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"
+            />
+          </svg>
+          <span class="hidden sm:block text-sm">Cart</span>
+          <span
+            id="cart-badge"
+            class="hidden absolute -top-1.5 -right-1.5 w-5 h-5 rounded-full bg-emerald-500 text-white text-[10px] font-bold flex items-center justify-center"
+          >
+            0
+          </span>
+        </button>
+      </div>
+    </nav>
+
+    <!-- ─────────────── HERO ─────────────── -->
+    <section class="relative pt-32 pb-12 px-4 text-center">
+      <div class="max-w-2xl mx-auto">
+        <div
+          class="inline-flex items-center gap-2 text-xs text-emerald-400 tracking-widest uppercase mb-6 px-4 py-2 rounded-full ring-1 ring-emerald-500/25 bg-emerald-500/[0.07]"
+        >
+          <span
+            class="w-1.5 h-1.5 bg-emerald-400 rounded-full animate-pulse"
+          ></span>
+          Kitchen Open · Accepting Orders
+        </div>
+
+        <h1
+          class="text-4xl sm:text-5xl md:text-6xl font-extrabold text-white leading-[1.1] tracking-tight mb-4"
+        >
+          Fine Dining,<br />
+          <span
+            class="bg-clip-text text-transparent bg-gradient-to-r from-emerald-400 via-emerald-300 to-emerald-500"
+          >
+            Elevated.
+          </span>
+        </h1>
+        <p class="text-zinc-500 text-base mb-10">
+          Curated experiences for the discerning palate.
+        </p>
+
+        <!-- Search -->
+        <div class="relative max-w-md mx-auto">
+          <svg
+            class="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-500 pointer-events-none"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+            stroke-width="2"
+          >
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+            />
+          </svg>
+          <input
+            id="search-input"
+            type="text"
+            placeholder="Search the menu…"
+            class="search-input w-full pl-11 pr-4 py-4 rounded-2xl text-sm"
+          />
+        </div>
+      </div>
+    </section>
+
+    <!-- ─────────────── CATEGORIES ─────────────── -->
+    <section class="px-4 mb-8">
+      <div class="max-w-5xl mx-auto">
+        <div
+          id="categories"
+          class="flex gap-2 cats-scroll overflow-x-auto pb-1"
+        >
+          <!-- Rendered by JS -->
+        </div>
+      </div>
+    </section>
+
+    <!-- ─────────────── MENU GRID ─────────────── -->
+    <main class="px-4 pb-24 relative z-10">
+      <div class="max-w-5xl mx-auto">
+        <div
+          id="menu-grid"
+          class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5"
+        >
+          <!-- Rendered by JS -->
+        </div>
+      </div>
+    </main>
+
+    <!-- ─────────────── CART OVERLAY ─────────────── -->
+    <div id="cart-overlay" onclick="closeCart()"></div>
+
+    <!-- ─────────────── CART DRAWER ─────────────── -->
+    <div id="cart-drawer">
+      <!-- Drawer Header -->
+      <div
+        class="flex items-center justify-between px-6 py-5 border-b border-white/[0.06]"
+      >
+        <div>
+          <h2 class="text-base font-bold text-white">Your Order</h2>
+          <p id="cart-count-label" class="text-xs text-zinc-500 mt-0.5">
+            0 items
+          </p>
+        </div>
+        <button
+          onclick="closeCart()"
+          class="w-9 h-9 rounded-xl bg-white/5 hover:bg-white/10 flex items-center justify-center text-zinc-400 hover:text-white transition-all border border-white/8"
+        >
+          <svg
+            class="w-4 h-4"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+            stroke-width="2"
+          >
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              d="M6 18L18 6M6 6l12 12"
+            />
+          </svg>
+        </button>
+      </div>
+
+      <!-- Empty state -->
+      <div
+        id="cart-empty"
+        class="flex-1 flex flex-col items-center justify-center gap-3 text-zinc-600 py-20"
+      >
+        <span class="text-5xl opacity-40">🛒</span>
+        <p class="text-sm font-medium">Your cart is empty</p>
+        <p class="text-xs">Add something from the menu</p>
+      </div>
+
+      <!-- Cart items -->
+      <div id="cart-items-list" class="px-4 py-2"></div>
+
+      <!-- Cart footer (hidden when empty) -->
+      <div
+        id="cart-footer"
+        class="hidden border-t border-white/[0.06] px-6 pt-5 pb-6 space-y-5"
+      >
+        <!-- Subtotal -->
+        <div class="flex items-center justify-between">
+          <span class="text-sm text-zinc-400">Subtotal</span>
+          <span id="cart-total" class="text-lg font-bold text-white">Rp 0</span>
+        </div>
+
+        <!-- Note -->
+        <div>
+          <label
+            class="text-[11px] text-zinc-500 uppercase tracking-wider font-semibold mb-2 block"
+          >
+            Special Request
+          </label>
+          <textarea
+            id="note-input"
+            rows="2"
+            placeholder="Allergies, preferences…"
+            class="w-full bg-white/[0.04] border border-white/[0.07] rounded-xl px-3 py-2.5 text-sm text-zinc-200 placeholder-zinc-600 resize-none focus:outline-none focus:border-emerald-500/40 transition-colors"
+          ></textarea>
+        </div>
+
+        <!-- Payment Method Toggle -->
+        <div>
+          <label
+            class="text-[11px] text-zinc-500 uppercase tracking-wider font-semibold mb-3 block"
+          >
+            Payment Method
+          </label>
+          <div class="pay-toggle-wrap">
+            <button
+              class="pay-toggle"
+              id="pay-cash"
+              onclick="selectPayment('cash')"
+            >
+              <svg
+                class="w-4 h-4"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+                stroke-width="2"
+              >
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z"
+                />
+              </svg>
+              Cash
+            </button>
+            <button
+              class="pay-toggle"
+              id="pay-qris"
+              onclick="selectPayment('qris')"
+            >
+              <svg
+                class="w-4 h-4"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+                stroke-width="2"
+              >
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm12 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z"
+                />
+              </svg>
+              QRIS
+            </button>
+          </div>
+        </div>
+
+        <!-- Place Order -->
+        <button
+          id="place-order-btn"
+          disabled
+          onclick="placeOrder()"
+          class="w-full py-4 rounded-2xl text-sm font-bold tracking-wide"
+        >
+          Place Order
+        </button>
+      </div>
+    </div>
+
+    <!-- ─────────────── QRIS MODAL ─────────────── -->
+    <div id="qris-modal">
+      <div id="qris-card">
+        <!-- Header -->
+        <div class="flex items-center justify-between mb-6">
+          <div class="text-left">
+            <p
+              class="text-[10px] text-zinc-500 uppercase tracking-widest font-semibold"
+            >
+              Scan to Pay
+            </p>
+            <h3 class="text-base font-bold text-white mt-0.5">QRIS Payment</h3>
+          </div>
+          <button
+            onclick="closeQrisModal()"
+            class="w-8 h-8 rounded-xl bg-white/5 hover:bg-white/10 border border-white/8 flex items-center justify-center text-zinc-400 hover:text-white transition-all"
+          >
+            <svg
+              class="w-3.5 h-3.5"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+              stroke-width="2.5"
+            >
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                d="M6 18L18 6M6 6l12 12"
+              />
+            </svg>
+          </button>
+        </div>
+
+        <!-- QR Code -->
+        <div class="relative mb-5">
+          <div
+            class="p-3 rounded-2xl bg-[#09090b] ring-1 ring-white/8 inline-block"
+          >
+            <canvas id="qr-canvas" width="200" height="200"></canvas>
+          </div>
+          <!-- Scanning animation overlay -->
+          <div
+            class="absolute inset-3 rounded-xl overflow-hidden pointer-events-none"
+          >
+            <div class="qr-scan-line"></div>
+          </div>
+        </div>
+
+        <!-- Amount -->
+        <div class="mb-2">
+          <p class="text-xs text-zinc-500 mb-1">Total Amount</p>
+          <p id="qris-amount" class="text-2xl font-extrabold text-emerald-400">
+            Rp 0
+          </p>
+        </div>
+        <p class="text-xs text-zinc-600 mb-6">
+          Open your banking app and scan the code above.
+        </p>
+
+        <!-- QRIS badge -->
+        <div class="flex justify-center gap-2 mb-6">
+          <span
+            class="px-3 py-1.5 rounded-lg bg-white/5 text-[10px] text-zinc-500 font-semibold tracking-wider border border-white/6"
+          >
+            GoPay · OVO · Dana · BCA · BRI · Mandiri
+          </span>
+        </div>
+
+        <!-- Confirm payment -->
+        <button
+          onclick="confirmPayment()"
+          class="w-full py-3.5 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-white text-sm font-bold transition-all hover:shadow-[0_0_30px_rgba(16,185,129,0.4)] active:scale-[0.98]"
+        >
+          ✓ Confirm Payment
+        </button>
+        <button
+          onclick="closeQrisModal()"
+          class="w-full py-3 mt-2 rounded-xl text-zinc-500 hover:text-zinc-300 text-sm transition-colors"
+        >
+          Cancel
+        </button>
+      </div>
+    </div>
+
+    <!-- ─────────────── SUCCESS OVERLAY ─────────────── -->
+    <div id="success-overlay">
+      <div id="success-card" class="text-center px-8 py-10 max-w-sm">
+        <!-- Checkmark -->
+        <div class="flex justify-center mb-6">
+          <div class="relative">
+            <div
+              class="w-24 h-24 rounded-full bg-emerald-500/10 ring-1 ring-emerald-500/20 flex items-center justify-center"
+            >
+              <svg class="checkmark-svg" viewBox="0 0 52 52">
+                <circle class="checkmark-circle" cx="26" cy="26" r="24" />
+                <path class="checkmark-check" d="M14 27 L21 34 L38 17" />
+              </svg>
+            </div>
+            <!-- Particles -->
+            <div
+              id="particles"
+              class="absolute inset-0 pointer-events-none"
+            ></div>
+          </div>
+        </div>
+
+        <h2 class="text-2xl font-extrabold text-white mb-2">
+          Order Confirmed!
+        </h2>
+        <p class="text-zinc-400 text-sm mb-4">
+          Your order has been received by the kitchen.
+        </p>
+
+        <div
+          class="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white/5 ring-1 ring-white/10 mb-8"
+        >
+          <span class="text-xs text-zinc-500">Order No.</span>
+          <span
+            id="success-order-id"
+            class="text-sm font-bold text-white font-mono"
+            >—</span
+          >
+        </div>
+
+        <p class="text-zinc-600 text-xs">
+          This screen will close automatically…
+        </p>
+      </div>
+    </div>
+
+    <!-- ─────────────── Scripts ─────────────── -->
+    <script src="/socket.io/socket.io.js"></script>
+    <script>
+      // ═══════════════════════════════════════════════════
+      //  MENU DATA
+      // ═══════════════════════════════════════════════════
+      const MENU = [
+        {
+          id: 1,
+          name: "Wagyu Beef Rendang",
+          desc: "Slow-braised A5 wagyu with 40 aromatic Minang spices & coconut milk",
+          price: 285000,
+          category: "mains",
+          emoji: "🥩",
+          grad: "from-rose-950 via-zinc-900 to-zinc-950",
+        },
+        {
+          id: 2,
+          name: "Lobster Thermidor",
+          desc: "Boston lobster with truffle cream, gruyère crust & fine herbs",
+          price: 385000,
+          category: "mains",
+          emoji: "🦞",
+          grad: "from-orange-950 via-zinc-900 to-zinc-950",
+        },
+        {
+          id: 3,
+          name: "Black Truffle Pasta",
+          desc: "Hand-rolled tagliolini, 36-month Parmigiano & summer black truffle",
+          price: 195000,
+          category: "mains",
+          emoji: "🍝",
+          grad: "from-amber-950 via-zinc-900 to-zinc-950",
+        },
+        {
+          id: 4,
+          name: "Norwegian Salmon",
+          desc: "Pan-seared with miso butter, baby bok choy & dashi broth",
+          price: 225000,
+          category: "mains",
+          emoji: "🐟",
+          grad: "from-sky-950 via-zinc-900 to-zinc-950",
+        },
+        {
+          id: 5,
+          name: "Seared Foie Gras",
+          desc: "Pan-seared with brioche, Sauternes jelly & micro-herb garnish",
+          price: 165000,
+          category: "starters",
+          emoji: "🍞",
+          grad: "from-yellow-950 via-zinc-900 to-zinc-950",
+        },
+        {
+          id: 6,
+          name: "Tuna Tataki",
+          desc: "Seared yellowfin, yuzu ponzu, flying fish roe & shiso leaf",
+          price: 125000,
+          category: "starters",
+          emoji: "🐠",
+          grad: "from-red-950 via-zinc-900 to-zinc-950",
+        },
+        {
+          id: 7,
+          name: "Burrata Royale",
+          desc: "Imported burrata, heirloom cherry tomatoes & 15-year aged balsamic",
+          price: 115000,
+          category: "starters",
+          emoji: "🧀",
+          grad: "from-green-950 via-zinc-900 to-zinc-950",
+        },
+        {
+          id: 8,
+          name: "Hokkaido Scallops",
+          desc: "Seared with sweet pea purée, crispy pancetta & Kaluga caviar",
+          price: 155000,
+          category: "starters",
+          emoji: "🥗",
+          grad: "from-blue-950 via-zinc-900 to-zinc-950",
+        },
+        {
+          id: 9,
+          name: "Valrhona Fondant",
+          desc: "Warm dark chocolate with Madagascan vanilla & edible gold leaf",
+          price: 95000,
+          category: "desserts",
+          emoji: "🍫",
+          grad: "from-stone-900 via-zinc-900 to-zinc-950",
+        },
+        {
+          id: 10,
+          name: "Matcha Mille-Feuille",
+          desc: "Uji matcha cream with crystallized yuzu, sakura & white sesame",
+          price: 85000,
+          category: "desserts",
+          emoji: "🍵",
+          grad: "from-emerald-950 via-zinc-900 to-zinc-950",
+        },
+        {
+          id: 11,
+          name: "Signature Lemonade",
+          desc: "Cold-pressed lemon with butterfly pea flower & rosemary honey",
+          price: 55000,
+          category: "drinks",
+          emoji: "🍋",
+          grad: "from-indigo-950 via-zinc-900 to-zinc-950",
+        },
+        {
+          id: 12,
+          name: "Seasonal Mocktail",
+          desc: "Chef's rotating zero-proof cocktail with premium botanicals",
+          price: 75000,
+          category: "drinks",
+          emoji: "🍹",
+          grad: "from-purple-950 via-zinc-900 to-zinc-950",
+        },
+      ];
+
+      const CATEGORIES = [
+        { id: "all", label: "All", icon: "✦" },
+        { id: "starters", label: "Starters", icon: "🌿" },
+        { id: "mains", label: "Mains", icon: "🍽️" },
+        { id: "desserts", label: "Desserts", icon: "🍫" },
+        { id: "drinks", label: "Drinks", icon: "🥂" },
+      ];
+
+      // ═══════════════════════════════════════════════════
+      //  STATE
+      // ═══════════════════════════════════════════════════
+      let cart = [];
+      let selectedPayment = null;
+      let currentCategory = "all";
+      let searchQuery = "";
+
+      // ═══════════════════════════════════════════════════
+      //  SOCKET
+      // ═══════════════════════════════════════════════════
+      const socket = io();
+
+      socket.on("order-confirmed", (order) => {
+        cart = [];
+        selectedPayment = null;
+        document.getElementById("note-input").value = "";
+        closeCart();
+        closeQrisModal();
+        renderAll();
+        showSuccess(order.id);
+      });
+
+      // ═══════════════════════════════════════════════════
+      //  UTILS
+      // ═══════════════════════════════════════════════════
+      const fmt = (n) => "Rp " + new Intl.NumberFormat("id-ID").format(n);
+
+      const cartTotal = () =>
+        cart.reduce((s, i) => s + i.price * i.quantity, 0);
+
+      const cartCount = () => cart.reduce((s, i) => s + i.quantity, 0);
+
+      // ═══════════════════════════════════════════════════
+      //  RENDER CATEGORIES
+      // ═══════════════════════════════════════════════════
+      function renderCategories() {
+        const el = document.getElementById("categories");
+        el.innerHTML = CATEGORIES.map(
+          (c) => `
+        <button class="cat-tab ${c.id === currentCategory ? "active" : ""}
+                       px-4 py-2 rounded-xl text-xs font-semibold flex items-center gap-1.5"
+                onclick="setCategory('${c.id}')">
+          <span>${c.icon}</span> ${c.label}
+        </button>
+      `,
+        ).join("");
+      }
+
+      function setCategory(id) {
+        currentCategory = id;
+        renderCategories();
+        renderMenu();
+      }
+
+      // ═══════════════════════════════════════════════════
+      //  RENDER MENU GRID
+      // ═══════════════════════════════════════════════════
+      function renderMenu() {
+        const grid = document.getElementById("menu-grid");
+        const q = searchQuery.toLowerCase();
+
+        const filtered = MENU.filter((item) => {
+          const matchCat =
+            currentCategory === "all" || item.category === currentCategory;
+          const matchSrch =
+            !q ||
+            item.name.toLowerCase().includes(q) ||
+            item.desc.toLowerCase().includes(q);
+          return matchCat && matchSrch;
+        });
+
+        if (!filtered.length) {
+          grid.innerHTML = `
+          <div class="col-span-full text-center py-24 text-zinc-600">
+            <div class="text-4xl mb-3 opacity-50">🔍</div>
+            <p class="text-sm">No dishes match your search.</p>
+          </div>`;
+          return;
+        }
+
+        grid.innerHTML = filtered
+          .map((item, idx) => {
+            const ci = cart.find((c) => c.id === item.id);
+            const qty = ci ? ci.quantity : 0;
+            const btnHtml =
+              qty === 0
+                ? `<button class="add-btn px-3 py-2 rounded-xl text-xs font-semibold flex items-center gap-1"
+                     onclick="addToCart(${item.id})">
+               <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5">
+                 <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/>
+               </svg> Add
+             </button>`
+                : `<div class="flex items-center gap-2">
+               <button class="qty-btn w-7 h-7 rounded-lg text-sm font-bold flex items-center justify-center"
+                       onclick="removeFromCart(${item.id})">−</button>
+               <span class="text-sm font-bold text-white w-4 text-center">${qty}</span>
+               <button class="qty-btn w-7 h-7 rounded-lg text-sm font-bold flex items-center justify-center"
+                       onclick="addToCart(${item.id})">+</button>
+             </div>`;
+
+            return `
+          <div class="menu-card rounded-2xl overflow-hidden card-anim"
+               style="animation-delay:${idx * 0.06}s">
+            <!-- Visual header -->
+            <div class="h-36 bg-gradient-to-br ${item.grad} relative flex items-center justify-center overflow-hidden">
+              <span class="card-emoji text-5xl select-none">${item.emoji}</span>
+              <div class="absolute inset-0 bg-gradient-to-t from-[#09090b]/60 via-transparent to-transparent"></div>
+              <span class="absolute top-3 right-3 text-[10px] px-2 py-0.5 rounded-full
+                           bg-black/50 text-zinc-400 border border-white/8 font-medium capitalize">
+                ${item.category}
+              </span>
+            </div>
+            <!-- Content -->
+            <div class="p-4">
+              <h3 class="font-bold text-white text-sm leading-snug">${item.name}</h3>
+              <p class="text-zinc-500 text-[11px] mt-1 leading-relaxed line-clamp-2">${item.desc}</p>
+              <div class="flex items-center justify-between mt-4">
+                <span class="text-emerald-400 font-bold text-sm">${fmt(item.price)}</span>
+                ${btnHtml}
+              </div>
+            </div>
+          </div>`;
+          })
+          .join("");
+      }
+
+      // ═══════════════════════════════════════════════════
+      //  CART LOGIC
+      // ═══════════════════════════════════════════════════
+      function addToCart(id) {
+        const item = MENU.find((m) => m.id === id);
+        const ex = cart.find((c) => c.id === id);
+        if (ex) ex.quantity++;
+        else cart.push({ ...item, quantity: 1 });
+        renderAll();
+      }
+
+      function removeFromCart(id) {
+        const ex = cart.find((c) => c.id === id);
+        if (!ex) return;
+        if (ex.quantity <= 1) cart = cart.filter((c) => c.id !== id);
+        else ex.quantity--;
+        renderAll();
+      }
+
+      function renderAll() {
+        renderMenu();
+        renderCartDrawer();
+        updateCartBadge();
+      }
+
+      // ═══════════════════════════════════════════════════
+      //  CART BADGE
+      // ═══════════════════════════════════════════════════
+      function updateCartBadge() {
+        const badge = document.getElementById("cart-badge");
+        const count = cartCount();
+        if (count > 0) {
+          badge.textContent = count;
+          badge.classList.remove("hidden");
+          badge.classList.add("flex");
+        } else {
+          badge.classList.add("hidden");
+          badge.classList.remove("flex");
+        }
+      }
+
+      // ═══════════════════════════════════════════════════
+      //  CART DRAWER
+      // ═══════════════════════════════════════════════════
+      function openCart() {
+        document.getElementById("cart-drawer").classList.add("open");
+        document.getElementById("cart-overlay").classList.add("open");
+        document.body.style.overflow = "hidden";
+      }
+
+      function closeCart() {
+        document.getElementById("cart-drawer").classList.remove("open");
+        document.getElementById("cart-overlay").classList.remove("open");
+        document.body.style.overflow = "";
+      }
+
+      function renderCartDrawer() {
+        const empty = document.getElementById("cart-empty");
+        const list = document.getElementById("cart-items-list");
+        const footer = document.getElementById("cart-footer");
+        const label = document.getElementById("cart-count-label");
+        const count = cartCount();
+
+        label.textContent = `${count} item${count !== 1 ? "s" : ""}`;
+
+        if (cart.length === 0) {
+          empty.classList.remove("hidden");
+          empty.style.display = "flex";
+          list.innerHTML = "";
+          footer.classList.add("hidden");
+          return;
+        }
+
+        empty.classList.add("hidden");
+        empty.style.display = "none";
+        footer.classList.remove("hidden");
+
+        list.innerHTML = cart
+          .map(
+            (item) => `
+        <div class="flex items-start gap-3 py-3.5 border-b border-white/[0.05]">
+          <div class="w-10 h-10 rounded-xl bg-gradient-to-br ${item.grad}
+                      flex items-center justify-center text-lg flex-shrink-0">
+            ${item.emoji}
+          </div>
+          <div class="flex-1 min-w-0">
+            <p class="text-sm font-semibold text-white truncate">${item.name}</p>
+            <p class="text-xs text-zinc-500 mt-0.5">${fmt(item.price)} each</p>
+          </div>
+          <div class="flex items-center gap-2 flex-shrink-0">
+            <button class="qty-btn w-7 h-7 rounded-lg text-sm flex items-center justify-center"
+                    onclick="removeFromCart(${item.id})">−</button>
+            <span class="text-sm font-bold text-white w-4 text-center">${item.quantity}</span>
+            <button class="qty-btn w-7 h-7 rounded-lg text-sm flex items-center justify-center"
+                    onclick="addToCart(${item.id})">+</button>
+          </div>
+        </div>
+      `,
+          )
+          .join("");
+
+        // Update total
+        document.getElementById("cart-total").textContent = fmt(cartTotal());
+
+        // Restore payment toggle state
+        document.getElementById("pay-cash").className =
+          `pay-toggle${selectedPayment === "cash" ? " selected" : ""}`;
+        document.getElementById("pay-qris").className =
+          `pay-toggle${selectedPayment === "qris" ? " selected" : ""}`;
+
+        updatePlaceOrderBtn();
+      }
+
+      // ═══════════════════════════════════════════════════
+      //  PAYMENT
+      // ═══════════════════════════════════════════════════
+      function selectPayment(method) {
+        selectedPayment = method;
+        document.getElementById("pay-cash").className =
+          `pay-toggle${method === "cash" ? " selected" : ""}`;
+        document.getElementById("pay-qris").className =
+          `pay-toggle${method === "qris" ? " selected" : ""}`;
+        updatePlaceOrderBtn();
+      }
+
+      function updatePlaceOrderBtn() {
+        const btn = document.getElementById("place-order-btn");
+        const ok = selectedPayment && cart.length > 0;
+        btn.disabled = !ok;
+      }
+
+      function placeOrder() {
+        if (!selectedPayment || !cart.length) return;
+        if (selectedPayment === "cash") {
+          sendOrder();
+        } else {
+          openQrisModal();
+        }
+      }
+
+      function sendOrder() {
+        socket.emit("place-order", {
+          items: cart.map(({ id, name, price, quantity }) => ({
+            id,
+            name,
+            price,
+            quantity,
+          })),
+          total: cartTotal(),
+          paymentMethod: selectedPayment,
+          note: document.getElementById("note-input").value.trim(),
+        });
+      }
+
+      // ═══════════════════════════════════════════════════
+      //  QRIS MODAL
+      // ═══════════════════════════════════════════════════
+      function openQrisModal() {
+        document.getElementById("qris-amount").textContent = fmt(cartTotal());
+        drawFakeQR(document.getElementById("qr-canvas"), "LUXE-" + Date.now());
+        document.getElementById("qris-modal").classList.add("open");
+        document.body.style.overflow = "hidden";
+      }
+
+      function closeQrisModal() {
+        document.getElementById("qris-modal").classList.remove("open");
+        document.body.style.overflow = "hidden"; // keep cart body lock
+      }
+
+      function confirmPayment() {
+        closeQrisModal();
+        sendOrder();
+      }
+
+      // ─── Fake QR Code Generator ──────────────────────
+      function drawFakeQR(canvas, seed) {
+        const ctx = canvas.getContext("2d");
+        const S = canvas.width; // 200
+        const N = 21;
+        const cs = S / N;
+        const BG = "#09090b";
+        const FG = "#10b981";
+
+        ctx.fillStyle = BG;
+        ctx.fillRect(0, 0, S, S);
+
+        const dot = (r, c, color) => {
+          ctx.fillStyle = color || FG;
+          const p = 1.5;
+          ctx.beginPath();
+          ctx.roundRect(c * cs + p, r * cs + p, cs - p * 2, cs - p * 2, 2);
+          ctx.fill();
+        };
+
+        // Finder pattern helper
+        const finder = (sr, sc) => {
+          for (let r = 0; r < 7; r++) {
+            for (let c = 0; c < 7; c++) {
+              const outer = r === 0 || r === 6 || c === 0 || c === 6;
+              const inner = r >= 2 && r <= 4 && c >= 2 && c <= 4;
+              dot(sr + r, sc + c, outer || inner ? FG : BG);
+            }
+          }
+        };
+
+        finder(0, 0);
+        finder(0, 14);
+        finder(14, 0);
+
+        // Timing strips
+        for (let i = 8; i <= 12; i++) {
+          if (i % 2 === 0) {
+            dot(6, i);
+            dot(i, 6);
+          }
+        }
+
+        // Seeded data modules
+        let s = Array.from(String(seed)).reduce(
+          (a, c) => (a * 31 + c.charCodeAt(0)) & 0xffffff,
+          0x1a2b3c,
+        );
+        const rng = () => {
+          s ^= s << 13;
+          s ^= s >> 17;
+          s ^= s << 5;
+          return (s >>> 0) / 0xffffffff;
+        };
+
+        for (let r = 0; r < N; r++) {
+          for (let c = 0; c < N; c++) {
+            if (r < 8 && c < 8) continue;
+            if (r < 8 && c >= 13) continue;
+            if (r >= 13 && c < 8) continue;
+            if (r === 6 || c === 6) continue;
+            if (rng() > 0.52) dot(r, c);
+          }
+        }
+
+        // Center logo hint
+        ctx.fillStyle = BG;
+        ctx.fillRect(S / 2 - 14, S / 2 - 14, 28, 28);
+        ctx.fillStyle = FG;
+        ctx.font = "bold 16px sans-serif";
+        ctx.textAlign = "center";
+        ctx.textBaseline = "middle";
+        ctx.fillText("◆", S / 2, S / 2);
+      }
+
+      // ═══════════════════════════════════════════════════
+      //  SUCCESS OVERLAY
+      // ═══════════════════════════════════════════════════
+      function showSuccess(orderId) {
+        const overlay = document.getElementById("success-overlay");
+        const card = document.getElementById("success-card");
+        document.getElementById("success-order-id").textContent = orderId;
+
+        overlay.classList.add("open");
+        card.classList.add("success-open");
+        document.body.style.overflow = "hidden";
+
+        // Spawn confetti particles
+        spawnParticles();
+
+        setTimeout(() => {
+          overlay.classList.remove("open");
+          card.classList.remove("success-open");
+          document.body.style.overflow = "";
+        }, 4500);
+      }
+
+      function spawnParticles() {
+        const container = document.getElementById("particles");
+        container.innerHTML = "";
+        const colors = ["#10b981", "#6ee7b7", "#34d399", "#a7f3d0", "#fff"];
+        for (let i = 0; i < 14; i++) {
+          const p = document.createElement("div");
+          const angle = (i / 14) * Math.PI * 2;
+          const dist = 50 + Math.random() * 40;
+          const tx = Math.cos(angle) * dist;
+          const ty = Math.sin(angle) * dist;
+          p.style.cssText = `
+          position:absolute; top:50%; left:50%;
+          width:${4 + Math.random() * 4}px; height:${4 + Math.random() * 4}px;
+          border-radius:50%;
+          background:${colors[Math.floor(Math.random() * colors.length)]};
+          transform:translate(-50%,-50%);
+          animation: particle 1.2s ${i * 0.06}s cubic-bezier(0,0.9,0.6,1) both;
+          --tx:${tx}px; --ty:${ty}px;
+        `;
+          container.appendChild(p);
+        }
+      }
+
+      // Add particle keyframe dynamically
+      const styleEl = document.createElement("style");
+      styleEl.textContent = `
+      @keyframes particle {
+        from { transform: translate(-50%,-50%) scale(1); opacity:1; }
+        to   { transform: translate(calc(-50% + var(--tx)), calc(-50% + var(--ty))) scale(0); opacity:0; }
+      }
+      .qr-scan-line {
+        position: absolute; left:0; right:0; height:2px;
+        background: linear-gradient(to right, transparent, rgba(16,185,129,0.8), transparent);
+        animation: scan 2s ease-in-out infinite;
+        top: 0;
+      }
+      @keyframes scan {
+        0%   { top: 0%; opacity: 0; }
+        10%  { opacity: 1; }
+        90%  { opacity: 1; }
+        100% { top: 100%; opacity: 0; }
+      }
+    `;
+      document.head.appendChild(styleEl);
+
+      // ═══════════════════════════════════════════════════
+      //  INIT
+      // ═══════════════════════════════════════════════════
+      document.getElementById("search-input").addEventListener("input", (e) => {
+        searchQuery = e.target.value;
+        renderMenu();
+      });
+
+      renderCategories();
+      renderMenu();
+    </script>
+  </body>
+</html>
